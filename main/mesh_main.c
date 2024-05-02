@@ -80,46 +80,45 @@ void esp_mesh_p2p_tx_main(void *arg)
     int count = 0;
     char nmy_string[128];  // Make sure this is large enough for base_string + count.
     int ncount = 0;
-    char nbase_string[] = "NODE, Tx Count: ";
+    char nbase_string[] = "NODE 2, Tx Count: ";
 
     while (is_running) {
         /* non-root do nothing but print */
-        // if (!esp_mesh_is_root()) {
-        //     ESP_LOGI(MESH_TAG, "layer:%d, rtableSize:%d, %s", mesh_layer,
-        //              esp_mesh_get_routing_table_size(),
-        //              (is_mesh_connected && esp_mesh_is_root()) ? "ROOT" : is_mesh_connected ? "NODE" : "DISCONNECT");
-            
-        //     vTaskDelay(10 * 1000 / portTICK_PERIOD_MS);
-        //     continue;
-        // }
         if (!esp_mesh_is_root()) {
                 printf("I am not ROOT\n");
                 ESP_LOGI(MESH_TAG, "layer:%d, rtableSize:%d, %s", mesh_layer,
                         esp_mesh_get_routing_table_size(),
                         (is_mesh_connected && esp_mesh_is_root()) ? "ROOT" : is_mesh_connected ? "NODE" : "DISCONNECT");
 
-                mesh_addr_t route_table[CONFIG_MESH_ROUTE_TABLE_SIZE];
-                int route_table_size = 0;
-                esp_mesh_get_routing_table((mesh_addr_t *) &route_table,
-                                        CONFIG_MESH_ROUTE_TABLE_SIZE * 6, &route_table_size);
-                for (i = 0; i < route_table_size; i++) {
-
-                    printf("node Route %d: "MACSTR"\n", i, MAC2STR(route_table[i].addr));
-
+                
+                    esp_mesh_get_routing_table((mesh_addr_t *) &route_table,
+                                    CONFIG_MESH_ROUTE_TABLE_SIZE * 6, &route_table_size);
+                    if (send_count && !(send_count % 100)) {
+                        ESP_LOGI(MESH_TAG, "size:%d/%d,send_count:%d", route_table_size,
+                                esp_mesh_get_routing_table_size(), send_count);
                     }
-                sprintf(nmy_string, "%s%d", nbase_string, ncount++);
+                    send_count++;
+                /* Increment and append send_count to your string. */
+                    sprintf(nmy_string, "%s%d", nbase_string, ncount++);
 
-                /* Ensure your string (including the null-terminator) fits into tx_buf. */
-                if (strlen(nmy_string) + 1 > sizeof(tx_buf)) {
-                    printf("Error: String is too long for buffer.\n");
-                    return;
-                }
+                    /* Ensure your string (including the null-terminator) fits into tx_buf. */
+                    if (strlen(nmy_string) + 1 > sizeof(tx_buf)) {
+                            printf("Error: String is too long for buffer.\n");
+                            return;
+                        }
 
-                /* Copy your string into tx_buf. */
-                printf("Not root Sending\n");
-                memcpy(tx_buf, nmy_string, strlen(nmy_string) + 1);
-                printf("N Route 0: "MACSTR"\n", MAC2STR(route_table[0].addr));
-                esp_mesh_send(&route_table[0], &data, MESH_DATA_P2P, NULL, 0);
+                        /* Copy your string into tx_buf. */
+                        memcpy(tx_buf, nmy_string, strlen(nmy_string) + 1);
+                        printf("node Route par: "MACSTR"\n", MAC2STR(mesh_parent_addr.addr));
+
+                        /* Send data to the parent node. */
+                        esp_mesh_send(&mesh_parent_addr, &data, MESH_DATA_P2P, NULL, 0);
+                        printf("data sent to parent node\n");
+                // for (i = 0; i < route_table_size; i++) {
+
+                //         printf("node Route %d: "MACSTR"\n", i, MAC2STR(route_table[i].addr));
+
+                //         }
 
                 // vTaskDelay(10 * 1000 / portTICK_PERIOD_MS);
                 // continue;
