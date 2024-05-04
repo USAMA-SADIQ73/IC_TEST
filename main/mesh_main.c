@@ -85,6 +85,7 @@ void esp_mesh_p2p_tx_main(void *arg)
     while (is_running) {
         /* non-root do nothing but print */
         if (!esp_mesh_is_root()) {
+              
                 printf("I am not ROOT\n");
                 ESP_LOGI(MESH_TAG, "layer:%d, rtableSize:%d, %s", mesh_layer,
                         esp_mesh_get_routing_table_size(),
